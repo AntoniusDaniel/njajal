@@ -3,16 +3,17 @@ import 'models/pokemon.dart';
 import 'services/pokeapi_services.dart';
 
 void main() {
-  runApp(PokemonPediaApp());
+  runApp(PokepediaApp());
 }
 
-class PokemonPediaApp extends StatelessWidget {
+class PokepediaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pokemon Pedia',
+      title: 'Pokepedia',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: PokemonListScreen(),
     );
@@ -30,73 +31,76 @@ class _PokemonListScreenState extends State<PokemonListScreen> {
   @override
   void initState() {
     super.initState();
-    futurePokemons = PokeApiService().fetchPokemons();
+    futurePokemons = fetchPokemons();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pokemon Pedia'),
+        title: Text('Pokepedia'),
       ),
-      body: SafeArea(
-        child: FutureBuilder<List<Pokemon>>(
-          future: futurePokemons,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Failed to load Pokemons'));
-            } else if (snapshot.hasData) {
-              return GridView.builder(
-                padding: EdgeInsets.all(8.0),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8.0,
-                  crossAxisSpacing: 8.0,
-                  childAspectRatio: 0.75, // Ratio lebar dan tinggi item grid
-                ),
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  final pokemon = snapshot.data![index];
-                  return Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ClipRRect(
+      body: FutureBuilder<List<Pokemon>>(
+        future: futurePokemons,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+                child: Text('Failed to load Pokémons: ${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount:
+                    MediaQuery.of(context).orientation == Orientation.portrait
+                        ? 2
+                        : 4,
+                mainAxisSpacing: 8.0,
+                crossAxisSpacing: 8.0,
+                childAspectRatio: 0.75,
+              ),
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) {
+                final pokemon = snapshot.data![index];
+                return Card(
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
                           borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(10.0)),
+                              BorderRadius.vertical(top: Radius.circular(15.0)),
                           child: Image.network(
                             pokemon.imageUrl,
                             fit: BoxFit.cover,
-                            height: 120,
+                            width: double.infinity,
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            pokemon.name,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          pokemon.name,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            } else {
-              return Center(child: Text('No Pokemons found'));
-            }
-          },
-        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            return Center(child: Text('No Pokémons found'));
+          }
+        },
       ),
     );
   }

@@ -1,26 +1,24 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/pokemon.dart';
+import 'package:pokepedia/models/pokemon.dart';
 
-class PokeApiService {
-  final String apiUrl = 'https://pokeapi.co/api/v2/pokemon?limit=100';
+Future<List<Pokemon>> fetchPokemons() async {
+  final response =
+      await http.get(Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=100'));
 
-  Future<List<Pokemon>> fetchPokemons() async {
-    final response = await http.get(Uri.parse(apiUrl));
+  if (response.statusCode == 200) {
+    List<dynamic> data = jsonDecode(response.body)['results'];
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body)['results'];
-      List<Pokemon> pokemons = [];
-
-      for (var item in data) {
-        final pokeDetailResponse = await http.get(Uri.parse(item['url']));
-        if (pokeDetailResponse.statusCode == 200) {
-          pokemons.add(Pokemon.fromJson(json.decode(pokeDetailResponse.body)));
-        }
+    // Fetch details for each Pokemon
+    List<Pokemon> pokemons = [];
+    for (var item in data) {
+      final detailResponse = await http.get(Uri.parse(item['url']));
+      if (detailResponse.statusCode == 200) {
+        pokemons.add(Pokemon.fromJson(jsonDecode(detailResponse.body)));
       }
-      return pokemons;
-    } else {
-      throw Exception('Failed to load Pokemons');
     }
+    return pokemons;
+  } else {
+    throw Exception('Failed to load Pokémons');
   }
 }
